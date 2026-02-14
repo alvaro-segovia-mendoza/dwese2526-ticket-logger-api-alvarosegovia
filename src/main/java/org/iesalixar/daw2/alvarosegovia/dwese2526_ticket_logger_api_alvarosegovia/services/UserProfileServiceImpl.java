@@ -1,7 +1,8 @@
 package org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.services;
 
 import jakarta.transaction.Transactional;
-import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.dto.UserProfileFormDTO;
+import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.dto.UserProfileDTO;
+import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.dto.UserProfilePatchDTO;
 import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.entities.User;
 import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.entities.UserProfile;
 import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.exceptions.InvalidFileException;
@@ -36,7 +37,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private FileStorageService fileStorageService;
 
     @Override
-    public UserProfileFormDTO getFormByEmail(String email) {
+    public UserProfileDTO getFormByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("user", "email", email));
 
@@ -45,33 +46,72 @@ public class UserProfileServiceImpl implements UserProfileService {
         return UserProfileMapper.toFormDto(user, profile);
     }
 
+    /**
+     * Aplica un PATCH al perfil del usuario autenticado:
+     * solo actualiza los campos que vengan en el DTO (no-nulos) y, opcionalmente,
+     * sustituye la imagen de perfil si se adjunta un fichero.
+     *
+     * @param email            email del usuario autenticado (Principal)
+     * @param patchDto         datos parciales del perfil (campos nulos => no se modifican)
+     * @param profileImageFile imagen opcional (si viene, se valida y se reemplaza)
+     * @throws ResourceNotFoundException si no existe el usuario (por email)
+     * @throws InvalidFileException     si la imagen no cumple validaciones o no se puede guardar
+     */
     @Override
-    public void updateProfile(String email, UserProfileFormDTO profileDTO, MultipartFile profileImageFile) {
+    @Transactional
+    public void updateProfile(String email, UserProfilePatchDTO patchDto, MultipartFile profileImageFile) {
+        logger.info("Parchando perfil para email={}", email);
 
-        logger.info("Actualizando perfil para email={}", email);
 
-        // 1) Comprobar que existe el usuario
+        // 1) Fuente de verdad: user por email (NO confiar en userId/email del cliente)
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("user", "email", email));
 
-        Long userId = user.getId();
-        // 2) Cargar perfil (puede no existir)
-        UserProfile profile = userProfileRepository.findByUserId(userId).orElse(null);
-        boolean isNew = (profile == null);
 
-        // 3) Gestión de imagen (solo si viene una nueva)
+        Long userId = user.getId();
+
+
+        // 2) Cargar perfil; si no existe, crearlo (PATCH upsert)
+        UserProfile profile = userProfileRepository.findByUserId(userId)
+                .orElseGet(() -> {
+                    UserProfile p = new UserProfile();
+                    p.setUser(user);
+                    return p;
+                });
+
+
+        // 3) Merge de campos: solo tocar si vienen (no-null)
+        if (patchDto.getFirstName() != null) {
+            profile.setFirstName(patchDto.getFirstName());
+        }
+        if (patchDto.getLastName() != null) {
+            profile.setLastName(patchDto.getLastName());
+        }
+        if (patchDto.getPhoneNumber() != null) {
+            profile.setPhoneNumber(patchDto.getPhoneNumber());
+        }
+        if (patchDto.getBio() != null) {
+            profile.setBio(patchDto.getBio());
+        }
+        if (patchDto.getLocale() != null) {
+            profile.setLocale(patchDto.getLocale());
+        }
+
+
+        // 4) Imagen: validar + guardar nueva + borrar anterior
         if (profileImageFile != null && !profileImageFile.isEmpty()) {
 
-            // 3.1 Validaciones
+
+            // Validaciones semánticas (lanza InvalidFileException si algo no cuadra)
             validateProfileImage(profileImageFile);
 
-            // Imagen anterior (fuente de verdad: la entidad)
-            String oldImagePath = profileDTO.getProfileImage();
 
-            // Guardar nueva imagen
+            // OJO: la ruta anterior está en la ENTIDAD, no en el DTO de entrada
+            String oldImagePath = profile.getProfileImage();
+
+
             String newImageWebPath = fileStorageService.saveFile(profileImageFile);
             if (newImageWebPath == null || newImageWebPath.isBlank()) {
-                // Se lanza la excepción (resource, field, value, detail)
                 throw new InvalidFileException(
                         "userProfile",
                         "profileImageFile",
@@ -80,24 +120,21 @@ public class UserProfileServiceImpl implements UserProfileService {
                 );
             }
 
-            profileDTO.setProfileImage(newImageWebPath);
 
-            // Borrar imagen anterior si existía
-            if (oldImagePath != null && !oldImagePath.isBlank()) {
+            profile.setProfileImage(newImageWebPath);
+
+
+            // Borrar anterior si existía y es distinta (evitas borrarte a ti mismo si reusas nombre)
+            if (oldImagePath != null && !oldImagePath.isBlank() && !oldImagePath.equals(newImageWebPath)) {
                 fileStorageService.deleteFile(oldImagePath);
             }
         }
 
-        // 4) Crear o actualizar entidad
-        if (isNew) {
-            profile = UserProfileMapper.toNewEntity(profileDTO, user);
-        } else {
-            UserProfileMapper.copyToExistingEntity(profileDTO, profile);
-        }
 
-        // 5) Persistir
+        // 5) Persistir (save sirve tanto para nuevo como existente)
         userProfileRepository.save(profile);
     }
+
 
 
     private void validateProfileImage(MultipartFile file) {

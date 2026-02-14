@@ -56,13 +56,17 @@ public class RegionMapper {
     /**
      * Convierte una entidad {@link Province} a {@link ProvinceDTO}.
      */
-    public static ProvinceDTO toProvinceDTO(Province p) {
-        if (p == null) return null;
+    public static ProvinceDTO toProvinceDTO(Province province) {
+        if (province == null) return null;
+
         ProvinceDTO dto = new ProvinceDTO();
-        dto.setId(p.getId());
-        dto.setName(p.getName());
+        dto.setId(province.getId());
+        dto.setCode(province.getCode());
+        dto.setName(province.getName());
+        dto.setRegionName(province.getRegion() != null ? province.getRegion().getName() : null);
         return dto;
     }
+
 
     /**
      * Convierte una lista de {@link Province} a {@link ProvinceDTO}.

@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserProfileFormDTO {
+public class UserProfileDTO {
 
     /** ID del usuario autenticado (se usa para buscar/crear el perfil) */
     private Long userId;

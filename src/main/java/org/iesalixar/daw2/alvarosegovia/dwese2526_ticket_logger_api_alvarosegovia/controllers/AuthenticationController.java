@@ -3,7 +3,7 @@ package org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegov
 import jakarta.validation.Valid;
 import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.dto.AuthRequestDTO;
 import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.dto.AuthResponseDTO;
-import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.utils.JWTUtil;
+import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,7 +26,7 @@ public class AuthenticationController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private JWTUtil jwtUtil;
+    private JwtUtil jwtUtil;
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthResponseDTO> authenticate(@Valid @RequestBody AuthRequestDTO authRequest) throws AuthenticationException {

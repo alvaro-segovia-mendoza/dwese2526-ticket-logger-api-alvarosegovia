@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.function.Function;
 
 @Component
-public class JWTUtil {
+public class JwtUtil {
 
     @Autowired
     private KeyPair jwtKeyPair;
@@ -59,7 +59,7 @@ public class JWTUtil {
             }
 
             Date exp = claims.getExpiration();
-            return exp != null && exp.before(new Date());
+            return exp != null && exp.after(new Date());
         } catch (Exception e) {
             return false;
         }

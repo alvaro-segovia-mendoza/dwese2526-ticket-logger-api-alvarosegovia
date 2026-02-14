@@ -22,7 +22,7 @@ public class KeyConfig {
     @Value("${jwt.keystore.alias}")
     private String keystoreAlias;
 
-    @Value("${jwt.keystore.type}")
+    @Value("${jwt.keystore.type:PKCS12}")
     private String keystoreType;
 
     @Bean
