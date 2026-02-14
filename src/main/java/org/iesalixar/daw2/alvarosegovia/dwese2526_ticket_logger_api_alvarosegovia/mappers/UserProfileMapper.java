@@ -1,13 +1,13 @@
 package org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.mappers;
 
 import jakarta.validation.Valid;
-import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.dto.UserProfileFormDTO;
+import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.dto.UserProfileDTO;
 import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.entities.User;
 import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.entities.UserProfile;
 
 /**
  * Mapper utilitario entre la entidad {@link UserProfile} y su DTO de formulario
- * {@link UserProfileFormDTO}.
+ * {@link UserProfileDTO}.
  *
  * Está pensado para la funcionalidad "MI PERFIL", donde el mismo formulario
  * se usa tanto para crear el perfil (si no existe) como para editarlo.
@@ -22,7 +22,7 @@ public class UserProfileMapper {
 
     /**
      * Convierte una combinación de {@link User} + {@link UserProfile} en un
-     * {@link UserProfileFormDTO}.
+     * {@link UserProfileDTO}.
      *
      * Si el perfil es null, se devuelve un DTO con datos básicos del User
      * (id, email) y el resto de campos vacíos, útil para mostrar el formulario
@@ -32,12 +32,12 @@ public class UserProfileMapper {
      * @param profile   Perfil de usuario (puede ser null).
      * @return DTO para el formulario de perfil.
      */
-    public static UserProfileFormDTO toFormDto(User user, UserProfile profile) {
+    public static UserProfileDTO toFormDto(User user, UserProfile profile) {
         if (user == null) {
             return null;
         }
 
-        UserProfileFormDTO dto = new UserProfileFormDTO();
+        UserProfileDTO dto = new UserProfileDTO();
         dto.setUserId(user.getId());
         dto.setEmail(user.getEmail());
 
@@ -59,7 +59,7 @@ public class UserProfileMapper {
 
     /**
      * Crea una nueva entidad {@link UserProfile} a partir de un
-     * {@link UserProfileFormDTO} y un {@link User}.
+     * {@link UserProfileDTO} y un {@link User}.
      *
      * Pensado para el caso en el que el perfil aún no existe en base de datos.
      * El id toma del User asociado mediante la anotación @MapsId.
@@ -68,7 +68,7 @@ public class UserProfileMapper {
      * @param user      Entidad User asociado (obligatorio).
      * @return Nueva entidad UserProfile sin persistir.
      */
-    public static UserProfile toNewEntity(UserProfileFormDTO dto, User user) {
+    public static UserProfile toNewEntity(UserProfileDTO dto, User user) {
         if (dto == null || user == null) {
             return null;
         }
@@ -88,7 +88,7 @@ public class UserProfileMapper {
     }
 
     /**
-     * Copia los campos editables {@link UserProfileFormDTO} sobre una
+     * Copia los campos editables {@link UserProfileDTO} sobre una
      * entidad {@link UserProfile} existente.
      *
      * Recomendado para el caso de edición, manteniendo el estado de persistencia
@@ -97,7 +97,7 @@ public class UserProfileMapper {
      * @param dto       DTO con los datos del formulario.
      * @param profile   Entidad UserProfile existente (ya cargado de BD).
      */
-    public static void copyToExistingEntity(@Valid UserProfileFormDTO dto, UserProfile profile) {
+    public static void copyToExistingEntity(@Valid UserProfileDTO dto, UserProfile profile) {
         if (dto == null || profile == null) {
             return;
         }
