@@ -27,6 +27,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -60,7 +61,7 @@ public class RegionController {
             @ApiResponse(responseCode = "400", description = "Parámetros de paginación inválidos")
     })
     @GetMapping
-    public ResponseEntity<Page<RegionDTO>> listRegions(
+    public ResponseEntity<Page<RegionDTO>> getRegions(
             @PageableDefault(size = 10, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
 
         logger.info("Listando regiones (REST) page={}, size={}, sort={}", pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
@@ -72,6 +73,12 @@ public class RegionController {
         return ResponseEntity.ok(page);
     }
 
+     @GetMapping("/all")
+     public ResponseEntity<List<RegionDTO>> getAllRegions() {
+        logger.info("Solicitando la lista de todas las regiones...");
+        List<RegionDTO> regions = regionService.getAllRegions();
+        return ResponseEntity.ok(regions);
+     }
 
 
     /**
@@ -119,41 +126,6 @@ public class RegionController {
                 .toUri();
 
         return ResponseEntity.created(location).body(created);
-    }
-
-    /**
-     *  Muestra el detalle de una región específica, incluyendo su lista de provincias asociadas.
-     *
-     * @param id                 Identificador único de la región que se desea consultar.
-     * @param model              Modelo de Spring MVC utilizado para pasar datos a la vista.
-     * @param redirectAttributes Objeto para enviar mensajes flash de error o de información al redirigir.
-     * @param locale             Configuración regional actual del usuario (para internacionalización de mensajes).
-     * @return El nombre de la plantilla thymeleaf que muestra el detalle de la región
-     *          ({@code views/region/region-detail}), o una redirección a {@code /regions} en caso de error.
-     */
-    @GetMapping("/detail")
-    public String showDetail(@RequestParam("id") Long id,
-                             Model model,
-                             RedirectAttributes redirectAttributes,
-                             Locale locale) {
-        logger.info("Mostrando detalle de la región con ID {}", id);
-        try {
-            RegionDetailDTO regionDTO = regionService.getDetail(id);
-            model.addAttribute("region", regionDTO);
-            return "views/region/region-detail";
-        } catch (ResourceNotFoundException ex) {
-            String msg = messageSource.getMessage("msg.region-controller.detail.notFound", null, locale);
-            redirectAttributes.addFlashAttribute("errorMessage", msg);
-            return "redirect:/regions";
-        } catch (Exception e) {
-            logger.error("Error al obtener el detalle de la región {}: {}", id, e.getMessage(), e);
-            String msg = messageSource.getMessage(
-                    "msg.region-controller.detail.error",
-                    null,
-                    locale);
-            redirectAttributes.addFlashAttribute("errorMessage", msg);
-            return "redirect:/regions";
-        }
     }
 
 

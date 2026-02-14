@@ -15,6 +15,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 
 /**
  * Implementación de la lógica del negocio (casos de uso) para el CRUD de {@link Region}.
@@ -165,5 +167,17 @@ public class RegionServiceImpl implements RegionService {
 
         return RegionMapper.toDetailDTO(region);
     }
+
+    @Override
+    public List<RegionDTO> getAllRegions() {
+        // Recuperamos todas las regiones desde la base de datos
+        List<Region> regions = regionRepository.findAll();
+
+        // Convertimos cada entidad a DTO usando el mapper
+        return regions.stream()
+                .map(RegionMapper::toDTO)
+                .toList();
+    }
+
 
 }

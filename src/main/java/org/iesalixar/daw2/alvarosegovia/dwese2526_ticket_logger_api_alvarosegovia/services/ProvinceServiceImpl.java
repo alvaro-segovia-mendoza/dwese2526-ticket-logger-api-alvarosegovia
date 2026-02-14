@@ -9,6 +9,7 @@ import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovi
 import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.exceptions.DuplicateResourceException;
 import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.exceptions.ResourceNotFoundException;
 import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.mappers.ProvinceMapper;
+import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.mappers.RegionMapper;
 import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.repositories.ProvinceRepository;
 import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.repositories.RegionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * Implementación del servicio de gestión de provincias.
@@ -112,26 +115,33 @@ public class ProvinceServiceImpl implements ProvinceService {
      * @throws DuplicateResourceException si el código ya existe
      * @throws ResourceNotFoundException si la provincia no existe
      */
-    @Override
-    public ProvinceDTO update(ProvinceUpdateDTO dto) {
+     @Override
+     public ProvinceDTO update(ProvinceUpdateDTO dto) {
 
-        if (provinceRepository.existsByCodeAndIdNot(
-                dto.getCode(), dto.getId())) {
-            throw new DuplicateResourceException(
-                    "province", "code", dto.getCode());
-        }
+         if (provinceRepository.existsByCodeAndIdNot(dto.getCode(), dto.getId())) {
+         throw new DuplicateResourceException("province", "code", dto.getCode());
+         }
 
-        Province province = provinceRepository.findById(dto.getId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "province", "id", dto.getId())
-                );
+         Province province = provinceRepository.findById(dto.getId())
+         .orElseThrow(() -> new ResourceNotFoundException("province", "id", dto.getId()));
 
-        ProvinceMapper.copyToExistingEntity(dto, province);
-        province = provinceRepository.save(province);
+         // Copiamos los campos básicos
+         ProvinceMapper.copyToExistingEntity(dto, province);
 
-        return ProvinceMapper.toDTO(province);
-    }
+         // ⚡ Asignamos la region correctamente
+         if (dto.getRegionId() != null) {
+         Region region = regionRepository.findById(dto.getRegionId())
+         .orElseThrow(() -> new ResourceNotFoundException("region", "id", dto.getRegionId()));
+         province.setRegion(region);
+         } else {
+         province.setRegion(null); // si quieres permitir quitar la region
+         }
+
+         province = provinceRepository.save(province);
+
+         return ProvinceMapper.toDTO(province);
+     }
+
 
     /**
      * Elimina una provincia por su identificador.
@@ -165,5 +175,15 @@ public class ProvinceServiceImpl implements ProvinceService {
                 );
 
         return ProvinceMapper.toDetailDTO(province);
+    }
+
+    @Override
+    public List<ProvinceDTO> getAllProvinces() {
+        List<Province> regions = provinceRepository.findAll();
+
+        // Convertimos cada entidad a DTO usando el mapper
+        return regions.stream()
+                .map(ProvinceMapper::toDTO)
+                .toList();
     }
 }

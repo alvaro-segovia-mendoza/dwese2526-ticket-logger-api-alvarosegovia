@@ -1,10 +1,7 @@
 package org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.controllers;
 
 import jakarta.validation.Valid;
-import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.dto.ProvinceCreateDTO;
-import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.dto.ProvinceDTO;
-import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.dto.ProvinceDetailDTO;
-import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.dto.ProvinceUpdateDTO;
+import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.dto.*;
 import org.iesalixar.daw2.alvarosegovia.dwese2526_ticket_logger_api_alvarosegovia.services.ProvinceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 /**
  * Controlador REST que maneja las operaciones CRUD para la entidad 'Province'.
@@ -42,7 +40,7 @@ public class ProvinceController {
      * Lista paginada de provincias en JSON.
      */
     @GetMapping
-    public ResponseEntity<Page<ProvinceDTO>> listProvinces(
+    public ResponseEntity<Page<ProvinceDTO>> getProvinces(
             @PageableDefault(size = 10, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
 
         logger.info("Listando provincias (REST) page={}, size={}, sort={}", pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
@@ -54,6 +52,12 @@ public class ProvinceController {
         return ResponseEntity.ok(page);
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<ProvinceDTO>> getAllRegions() {
+        logger.info("Solicitando la lista de todas las provincias...");
+        List<ProvinceDTO> provinces = provinceService.getAllProvinces();
+        return ResponseEntity.ok(provinces);
+    }
     /**
      * Devuelve el detalle de una provincia por ID en JSON.
      */
