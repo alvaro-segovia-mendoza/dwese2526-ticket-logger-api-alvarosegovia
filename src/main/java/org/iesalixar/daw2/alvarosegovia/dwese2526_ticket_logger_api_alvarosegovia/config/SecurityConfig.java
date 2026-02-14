@@ -24,8 +24,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * para diferentes roles de usuario, y gestionando la política de sesiones.
  */
 @Configuration
-@EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)  // Activa la seguridad basada en métodos
+@EnableWebSecurity
 public class SecurityConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
